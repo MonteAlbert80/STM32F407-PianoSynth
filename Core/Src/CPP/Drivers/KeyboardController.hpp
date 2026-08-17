@@ -52,21 +52,33 @@ struct KeyState
     bool candidatePressed;
 
     uint32_t lastEdgeTime;
-    bool pending;
 };
 
 class KeyboardController {
 
-private:
-	KeyboardController();
-	int pintranslate(uint16_t GPIO_Pin);
-	static KeyboardController* _instance;
-	KeyState _keys[17];
 public:
+    using KeyEventHandler = void (*)(const KeyState& key, void* context);
     static KeyboardController* getInstance();
 	void initKeyboard(void);
-	//No longer using interrupts void keyInterrupt(uint16_t GPIO_Pin);
 	void process();
+
+    bool addEventListener(KeyEventHandler handler, void* context);
+private:
+	KeyboardController();
+	static KeyboardController* _instance;
+	KeyState _keys[17];
+
+    struct Listener
+    {
+        KeyEventHandler handler = nullptr;
+        void* context = nullptr;
+    };
+
+    static constexpr uint8_t MAX_LISTENERS = 4;
+    Listener _listeners[MAX_LISTENERS];
+
+    void notifyListeners(const KeyState& key);
+
 };
 
 #endif /* SRC_CPP_DRIVERS_KEYBOARDCONTROLLER_H_ */

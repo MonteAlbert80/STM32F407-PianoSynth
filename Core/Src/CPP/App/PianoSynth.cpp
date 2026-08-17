@@ -35,7 +35,14 @@ bool PianoSynth::init(
 
 
     UARTController::getInstance()->init();
-    KeyboardController::getInstance()->initKeyboard();
+
+    KeyboardController* keyboard = KeyboardController::getInstance();
+    keyboard->initKeyboard();
+    keyboard->addEventListener(keyboardEvent, this);
+
+    _audioController = &AudioController::_Instance;
+    _audioController->init(audioHandle_);
+
     initialized_ = true;
 
     playLEDs();
@@ -67,6 +74,7 @@ void PianoSynth::process()
      * - update UI when needed
      */
     KeyboardController::getInstance()->process();
+    _audioController->process();
 }
 
 /*
@@ -154,4 +162,29 @@ void PianoSynth::onTimerTick()
 		_ledController->turnOnBlue();
 		break;
 	}
+}
+
+void PianoSynth::keyboardEvent(
+    const KeyState& key,
+    void* context)
+{
+    static_cast<PianoSynth*>(context)
+        ->onKeyboardEvent(key);
+}
+
+void PianoSynth::onKeyboardEvent(
+    const KeyState& key)
+{
+    if (key.stablePressed)
+    {
+        printf("K%d pressed\r\n", key.keyNumber);
+
+        _audioController->playKey(key.keyNumber);
+    }
+    else
+    {
+        printf("K%d released\r\n", key.keyNumber);
+
+        _audioController->stopKey(key.keyNumber);
+    }
 }

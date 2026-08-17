@@ -13,6 +13,7 @@
 #include "../Drivers/LEDController.hpp"
 #include "../Drivers/Timer.hpp"
 #include "../Audio/AudioController.hpp"
+#include "../Drivers/KeyboardController.hpp"
 
 class PianoSynth {
 public:
@@ -36,6 +37,10 @@ private:
     static void timerTick(void *context);
     void onTimerTick();
     LED_Controller *_ledController;
+    static void keyboardEvent(const KeyState& key, void* context);
+
+    void onKeyboardEvent(const KeyState& key);
+    AudioController* _audioController = nullptr;
 };
 
 #endif /* SRC_CPP_APP_PIANOSYNTH_HPP_ */

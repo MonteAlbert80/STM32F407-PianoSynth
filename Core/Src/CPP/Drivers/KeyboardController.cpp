@@ -53,61 +53,6 @@ KeyboardController *KeyboardController::getInstance() {
     return _instance;
 }
 
-int KeyboardController::pintranslate(uint16_t GPIO_Pin)
-{
-	switch(GPIO_Pin)
-	{
-	case GPIO_PIN_0:
-		return 0;
-		break;
-	case GPIO_PIN_2:
-		return 2;
-		break;
-	case GPIO_PIN_3:
-		return 3;
-		break;
-	case GPIO_PIN_4:
-		return 4;
-		break;
-	case GPIO_PIN_5:
-		return 5;
-		break;
-	case GPIO_PIN_6:
-		return 6;
-		break;
-	case GPIO_PIN_7:
-		return 7;
-		break;
-	case GPIO_PIN_8:
-		return 8;
-		break;
-	case GPIO_PIN_9:
-		return 9;
-		break;
-	case GPIO_PIN_10:
-		return 10;
-		break;
-	case GPIO_PIN_11:
-		return 11;
-		break;
-	case GPIO_PIN_12:
-		return 12;
-		break;
-	case GPIO_PIN_13:
-		return 13;
-		break;
-	case GPIO_PIN_14:
-		return 14;
-		break;
-	case GPIO_PIN_15:
-		return 15;
-		break;
-	default:
-		return -1;
-		break;
-	}
-}
-
 void KeyboardController::initKeyboard(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -194,7 +139,6 @@ void KeyboardController::initKeyboard(void)
 	    key.stablePressed = pressed;
 	    key.candidatePressed = pressed;
 	    key.lastEdgeTime = HAL_GetTick();
-	    key.pending = false;
 	}
 
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -234,15 +178,41 @@ void KeyboardController::process()
         //otherwise accept the new debounced state
         key.stablePressed = key.candidatePressed;
 
-        if (key.stablePressed)
+        notifyListeners(key);
+        //Previous code of printf have been moved to the listener
+    }
+}
+
+bool KeyboardController::addEventListener(
+    KeyEventHandler handler,
+    void* context)
+{
+    if (handler == nullptr)
+        return false;
+
+    for (auto& listener : _listeners)
+    {
+        if (listener.handler == nullptr)
         {
-            printf("K%d pressed\r\n", key.keyNumber);
-            // notify noteOn(key.keyNumber);
+            listener.handler = handler;
+            listener.context = context;
+            return true;
         }
-        else
+    }
+
+    return false;
+}
+
+void KeyboardController::notifyListeners(
+    const KeyState& key)
+{
+    for (auto& listener : _listeners)
+    {
+        if (listener.handler != nullptr)
         {
-            printf("K%d released\r\n", key.keyNumber);
-            // notify noteOff(key.keyNumber);
+            listener.handler(
+                key,
+                listener.context);
         }
     }
 }
