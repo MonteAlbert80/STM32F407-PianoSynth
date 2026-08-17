@@ -120,7 +120,7 @@ void KeyboardController::initKeyboard(void)
 	GPIO_InitStruct.Pin = GPIO_PIN_7  | GPIO_PIN_8  | GPIO_PIN_9  |
 	                      GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 |
 	                      GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
@@ -128,7 +128,7 @@ void KeyboardController::initKeyboard(void)
 	GPIO_InitStruct.Pin = GPIO_PIN_4  | GPIO_PIN_5  | GPIO_PIN_8  |
 	                      GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 |
 	                      GPIO_PIN_13 | GPIO_PIN_14;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 
 	//initializing KeyState Array
@@ -186,45 +186,55 @@ void KeyboardController::initKeyboard(void)
 	_keys[15].keyNumber = 15;
 	_keys[16].keyNumber = 16;
 
+	for (auto& key : _keys)
+	{
+	    bool pressed =
+	        (HAL_GPIO_ReadPin(key.port, key.pinMask) == GPIO_PIN_RESET);
+
+	    key.stablePressed = pressed;
+	    key.candidatePressed = pressed;
+	    key.lastEdgeTime = HAL_GetTick();
+	    key.pending = false;
+	}
+
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 
-	/* Enable NVIC interrupt channels */
-	HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(EXTI4_IRQn);
-
-	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
-	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
-	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+	/* No longer using NVIC. Will check status registers in process.
+	 * Removing that code */
 }
 
 void KeyboardController::process()
 {
     uint32_t now = HAL_GetTick();
 
-    constexpr uint32_t DEBOUNCE_MS = 10;
+    constexpr uint32_t DEBOUNCE_MS = 10U;
 
     for (auto& key : _keys)
     {
-        if (!key.pending)
-            continue;
+        bool currentPressed =
+            (HAL_GPIO_ReadPin(key.port, key.pinMask) == GPIO_PIN_RESET);
 
+
+        // Raw electrical state changed
+        if (currentPressed != key.candidatePressed)
+        {
+            key.candidatePressed = currentPressed;
+            key.lastEdgeTime = now;
+        }
+
+        //Checking if it was stable enough key state
         if ((now - key.lastEdgeTime) < DEBOUNCE_MS)
             continue;
 
-        bool pressed =
-            (HAL_GPIO_ReadPin(key.port, key.pinMask) == GPIO_PIN_RESET);
-
-        key.pending = false;
-
-        if (pressed == key.stablePressed)
+        //if already accepted new debounced state, then continue
+        if (key.candidatePressed == key.stablePressed)
             continue;
 
-        key.stablePressed = pressed;
+        //otherwise accept the new debounced state
+        key.stablePressed = key.candidatePressed;
 
-        if (pressed)
+        if (key.stablePressed)
         {
             printf("K%d pressed\r\n", key.keyNumber);
             // notify noteOn(key.keyNumber);
@@ -235,25 +245,4 @@ void KeyboardController::process()
             // notify noteOff(key.keyNumber);
         }
     }
-}
-
-void KeyboardController::keyInterrupt(uint16_t GPIO_Pin)
-{
-    uint32_t now = HAL_GetTick();
-
-    for (auto& key : _keys)
-    {
-        if (key.pinMask == GPIO_Pin)
-        {
-            key.lastEdgeTime = now;
-            key.pending = true;
-        }
-    }
-}
-
-
-
-extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	KeyboardController::getInstance()->keyInterrupt(GPIO_Pin);
 }

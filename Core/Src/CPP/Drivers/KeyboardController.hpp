@@ -65,7 +65,7 @@ private:
 public:
     static KeyboardController* getInstance();
 	void initKeyboard(void);
-	void keyInterrupt(uint16_t GPIO_Pin);
+	//No longer using interrupts void keyInterrupt(uint16_t GPIO_Pin);
 	void process();
 };
 
