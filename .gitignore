@@ -1,0 +1,53 @@
+# STM32CubeIDE build output
+Debug/
+Release/
+
+# Compiled objects and dependency files
+*.o
+*.obj
+*.d
+*.su
+*.cyclo
+
+# Firmware/build artifacts
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+
+# Eclipse workspace metadata
+.metadata/
+
+# STM32CubeIDE debug/launch configurations
+*.launch
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and backup files
+*.bak
+*.tmp
+*.orig
+*.rej
+
+# Keep STM32CubeIDE project configuration and source files.
+# Do NOT ignore:
+#   .project
+#   .cproject
+#   .mxproject
+#   .settings/
+#   *.ioc
+#   *.ld
+#   Core/
+#   Drivers/
+#   Middlewares/
+#   USB_HOST/
