@@ -66,7 +66,7 @@ public:
     static KeyboardController* getInstance();
 	void initKeyboard(void);
 	void keyInterrupt(uint16_t GPIO_Pin);
-	void KeyboardController::process();
+	void process();
 };
 
 #endif /* SRC_CPP_DRIVERS_KEYBOARDCONTROLLER_H_ */

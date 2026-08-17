@@ -45,7 +45,12 @@ bool PianoSynth::init(
 
 /*
  * Gets called all the time from main thread to basically keep
- * application alive. Most application logic is event driven elsewhere
+ * application alive. Most application logic is event driven elsewhere.
+ * Update: ignore what I said earlier. interrupt events are only used to change
+ * state. most code that require things done on hardware
+ * such as printf statement, that sends data to uart channels
+ * or anything to do with sending audio or to the LCD screen should be handled
+ * inside the process
  */
 void PianoSynth::process()
 {
@@ -61,6 +66,7 @@ void PianoSynth::process()
      * - update audio state
      * - update UI when needed
      */
+    KeyboardController::getInstance()->process();
 }
 
 /*

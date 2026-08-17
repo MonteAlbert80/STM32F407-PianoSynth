@@ -130,6 +130,62 @@ void KeyboardController::initKeyboard(void)
 	                      GPIO_PIN_13 | GPIO_PIN_14;
 	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
+
+	//initializing KeyState Array
+	_keys[0].pinMask = GPIO_PIN_7;
+	_keys[1].pinMask = GPIO_PIN_8;
+	_keys[2].pinMask = GPIO_PIN_9;
+	_keys[3].pinMask = GPIO_PIN_10;
+	_keys[4].pinMask = GPIO_PIN_11;
+	_keys[5].pinMask = GPIO_PIN_12;
+	_keys[6].pinMask = GPIO_PIN_13;
+	_keys[7].pinMask = GPIO_PIN_14;
+	_keys[8].pinMask = GPIO_PIN_15;
+	_keys[9].pinMask = GPIO_PIN_10;
+	_keys[10].pinMask = GPIO_PIN_11;
+	_keys[11].pinMask = GPIO_PIN_12;
+	_keys[12].pinMask = GPIO_PIN_13;
+	_keys[13].pinMask = GPIO_PIN_14;
+	_keys[14].pinMask = GPIO_PIN_4;
+	_keys[15].pinMask = GPIO_PIN_5;
+	_keys[16].pinMask = GPIO_PIN_8;
+
+	_keys[0].port = GPIOE;
+	_keys[1].port = GPIOE;
+	_keys[2].port = GPIOE;
+	_keys[3].port = GPIOE;
+	_keys[4].port = GPIOE;
+	_keys[5].port = GPIOE;
+	_keys[6].port = GPIOE;
+	_keys[7].port = GPIOE;
+	_keys[8].port = GPIOE;
+	_keys[9].port = GPIOB;
+	_keys[10].port = GPIOB;
+	_keys[11].port = GPIOB;
+	_keys[12].port = GPIOB;
+	_keys[13].port = GPIOB;
+	_keys[14].port = GPIOB;
+	_keys[15].port = GPIOB;
+	_keys[16].port = GPIOB;
+
+	_keys[0].keyNumber = 0;
+	_keys[1].keyNumber = 1;
+	_keys[2].keyNumber = 2;
+	_keys[3].keyNumber = 3;
+	_keys[4].keyNumber = 4;
+	_keys[5].keyNumber = 5;
+	_keys[6].keyNumber = 6;
+	_keys[7].keyNumber = 7;
+	_keys[8].keyNumber = 8;
+	_keys[9].keyNumber = 9;
+	_keys[10].keyNumber = 10;
+	_keys[11].keyNumber = 11;
+	_keys[12].keyNumber = 12;
+	_keys[13].keyNumber = 13;
+	_keys[14].keyNumber = 14;
+	_keys[15].keyNumber = 15;
+	_keys[16].keyNumber = 16;
+
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 
@@ -183,59 +239,16 @@ void KeyboardController::process()
 
 void KeyboardController::keyInterrupt(uint16_t GPIO_Pin)
 {
-	int pinNumber=pintranslate(GPIO_Pin);
-    // Non-overlapping pins
-    if (GPIO_Pin == GPIO_PIN_7 || GPIO_Pin == GPIO_PIN_8 || GPIO_Pin == GPIO_PIN_9 || GPIO_Pin == GPIO_PIN_15) {
-        // These unique pin numbers only exist on GPIOE in your setup
-        GPIO_PinState state = HAL_GPIO_ReadPin(GPIOE, GPIO_Pin);
-        // Process PE7, PE8, PE9, PE15...
-        if (state == GPIO_PIN_RESET) {
-            // Signal went LOW -> FALLING EDGE -> Key Pressed
-        	printf("PE%d Key pressed\r\n", pinNumber);
-        } else {
-            // Signal went HIGH -> RISING EDGE -> Key Released
-        	printf("PE%d Key released\r\n", pinNumber);
+    uint32_t now = HAL_GetTick();
+
+    for (auto& key : _keys)
+    {
+        if (key.pinMask == GPIO_Pin)
+        {
+            key.lastEdgeTime = now;
+            key.pending = true;
         }
     }
-
-    else if (GPIO_Pin == GPIO_PIN_4 || GPIO_Pin == GPIO_PIN_5) {
-        // These unique pin numbers only exist on GPIOB in your setup
-        GPIO_PinState state = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
-        // Process PB4, PB5...
-        if (state == GPIO_PIN_RESET) {
-            // Signal went LOW -> FALLING EDGE -> Key Pressed
-        	printf("PB%d Key pressed\r\n", pinNumber);
-        } else {
-            // Signal went HIGH -> RISING EDGE -> Key Released
-        	printf("PB%d Key released\r\n", pinNumber);
-        }
-    }
-
-    // Overlapping pin numbers (10, 11, 12, 13, 14 exist on BOTH PE and PB)
-    // Check PE pin state first, then PB
-    else if (GPIO_Pin >= GPIO_PIN_10 && GPIO_Pin <= GPIO_PIN_14) {
-        GPIO_PinState pe_state = HAL_GPIO_ReadPin(GPIOE, GPIO_Pin);
-        GPIO_PinState pb_state = HAL_GPIO_ReadPin(GPIOB, GPIO_Pin);
-
-        // Process states for PE (K3-K7) and PB (K9-K13)
-        if (pb_state == GPIO_PIN_RESET) {
-            // Key 11 (PB11) is PRESSED!
-        	printf("PB%d Key pressed\r\n", pinNumber);
-        } else if (pb_state == GPIO_PIN_SET) {
-            // Key 11 (PB11) is RELEASED!
-        	printf("PB%d Key released\r\n", pinNumber);
-        }
-
-        if (pe_state == GPIO_PIN_RESET) {
-            // Key 4 (PE11) is PRESSED!
-        	printf("PE%d Key pressed\r\n", pinNumber);
-        } else if (pe_state == GPIO_PIN_SET) {
-            // Key 4 (PE11) is RELEASED!
-        	printf("PE%d Key released\r\n", pinNumber);
-        }
-    }
-
-
 }
 
 
