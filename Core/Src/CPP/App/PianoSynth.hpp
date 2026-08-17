@@ -12,6 +12,7 @@
 
 #include "../Drivers/LEDController.hpp"
 #include "../Drivers/Timer.hpp"
+#include "../Audio/AudioController.hpp"
 
 class PianoSynth {
 public:
